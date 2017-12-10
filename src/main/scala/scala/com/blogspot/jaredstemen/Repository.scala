@@ -103,7 +103,7 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
 
   }
 
-  def reprioritizeNodeKey(nodeKey: Node[KeyType]): Unit = {
+  private def reprioritizeNodeKey(nodeKey: Node[KeyType]): Unit = {
     //Don't reprioirtize if we are the head already
     if (nodeKey == headOpt.get) {
       return
@@ -135,7 +135,7 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
 
   }
 
-  def lastOpt: Option[Node[KeyType]] = {
+  private def lastOpt: Option[Node[KeyType]] = {
     headOpt match {
       case Some(head) =>
         head.backwards
@@ -143,25 +143,27 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
     }
   }
 
-  def removeNodeToMakeSpace() = {
-    println("removing node....")
-    lastOpt match {
-      case Some(last) =>
-        last.forwards match {
-          case Some(secondToLast) =>
-            secondToLast.backwards = None
-          case None =>
-            //head == last
-            headOpt = None
-        }
-        keyNodeKeymap.remove(last.key)
-        map.remove(last)
-      case None =>
-        throw new RuntimeException("Called remove node on an empty data set!")
+  private def removeNode(node: Node[KeyType]): Unit = {
+    println(s"Removing node ${node}")
+    if(map.size == 1 ){
+      headOpt = None
+    }else{
+      headOpt match {
+        case Some(origHead) =>
+          if(origHead == node){
+            headOpt = origHead.backwards
+          }
+        case None =>
+      }
+      node.forwards.get.backwards = node.backwards
     }
+
+    //Delete reference from other structures
+    keyNodeKeymap.remove(node.key)
+    map.remove(node)
   }
 
-  def addToCache(nodeKey: Node[KeyType], v: Option[ValueType]) {
+  private def addToCache(nodeKey: Node[KeyType], v: Option[ValueType]) {
     keyNodeKeymap(nodeKey.key) = nodeKey
     map += nodeKey -> v
     headOpt match {
@@ -190,7 +192,7 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
         println("*cache MISS")
         val v = source.get(key)
         if (map.size == maxSize) {
-          removeNodeToMakeSpace()
+          removeNode(lastOpt.get)
         }
         addToCache(new Node(None, None, key), v)
         v
@@ -201,7 +203,7 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
       case Some(head) =>
         println(s"head is ${head.fullToString()} ")
       case None =>
-        println(s"head is ${headOpt} ")
+        println(s"head is $headOpt ")
     }
     ret
   }
