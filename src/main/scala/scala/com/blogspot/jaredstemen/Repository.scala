@@ -69,12 +69,18 @@ class Node[KeyType](private var _backwards: Option[Node[KeyType]], private var _
   def fullToString(): String = {
     var loc = this
 
+    var looped = false
     val sb: scala.StringBuilder = new StringBuilder("head    ")
-    while (loc.backwards.isDefined) {
+    while (loc.backwards.isDefined && !looped) {
       sb.append(s"<key: ${loc.key}>  -> ")
+
+      if (loc.backwards.get.forwards.get != loc) {
+        throw new RuntimeException(s"loc: ${loc} loc.backwards is ${loc.backwards} and backward foward is ${loc.backwards.get.forwards}")
+      }
       loc = loc.backwards.get
+      looped = loc == this
     }
-    sb.append(s"<key: ${loc.key}>  -> ")
+    //sb.append(s"<key: ${loc.key}>  -> ")
     sb.append("    tail")
 
     sb.toString
@@ -98,6 +104,14 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
   }
 
   def reprioritizeNodeKey(nodeKey: Node[KeyType]): Unit = {
+    //Don't reprioirtize if we are the head already
+    if (nodeKey == headOpt.get) {
+      return
+    }
+
+    val newHead = new Node(headOpt, None, nodeKey.key)
+    val origHead = headOpt
+    val origTail = lastOpt
     //remove nodeKey from queue
     nodeKey.backwards match {
       case Some(back) => {
@@ -105,44 +119,32 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
           case Some(foward) =>
             println("pinch out node")
             foward.backwards = Option(back)
+            origHead.get.forwards = Option(newHead)
+            newHead.forwards = origTail
+            headOpt = Option(newHead)
           //back.forwards = Option(foward)
           case None =>
             println("We are on the head node")
-            headOpt = Option(back)
+            throw new IllegalStateException(s"Forward node is undefined for $nodeKey")
         }
       }
       case None => {
-        nodeKey.forwards match {
-          case Some(foward) =>
-            println("We are on the last node")
-            foward.backwards = None
-          case None =>
-            println("We are the ONLY node")
-            headOpt = None
-        }
+        throw new IllegalStateException(s"Backward node is undefined for $nodeKey")
       }
     }
 
-    val genNode = Option(new Node(headOpt, None, nodeKey.key))
-
-    //Add node to front of queue
-    headOpt = genNode
   }
 
   def lastOpt: Option[Node[KeyType]] = {
-    //TODO should be possible to track the tail by updating it each time we remove nodes.
     headOpt match {
       case Some(head) =>
-        var last: Node[KeyType] = head
-        while (last.backwards.isDefined) {
-          last = last.backwards.get
-        }
-        Option(last)
+        head.backwards
       case None => None
     }
   }
 
   def removeNodeToMakeSpace() = {
+    println("removing node....")
     lastOpt match {
       case Some(last) =>
         last.forwards match {
@@ -162,13 +164,21 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
   def addToCache(nodeKey: Node[KeyType], v: Option[ValueType]) {
     keyNodeKeymap(nodeKey.key) = nodeKey
     map += nodeKey -> v
-    nodeKey.backwards = headOpt
+    headOpt match {
+      case Some(_) =>
+        val tail = lastOpt
+        nodeKey.backwards = headOpt
+        nodeKey.forwards = tail
+      case None =>
+        //We are the only node, link to self
+        nodeKey.backwards = Option(nodeKey)
+    }
     headOpt = Option(nodeKey)
   }
 
   override def get(key: KeyType): Option[ValueType] = {
 
-    println(s"get value for ${key} ")
+    println(s"******** get value for ${key} *************")
     val nodeKeyOpt: Option[Node[KeyType]] = keyNodeKeymap.get(key)
     val ret: Option[ValueType] = nodeKeyOpt match {
       case Some(nodeKey) =>

@@ -10,27 +10,23 @@ import scala.com.blogspot.jaredstemen.{CacheImpl, Repository}
 
 class MySpec extends WordSpec with MockitoSugar with Matchers {
 
-  /*  val source = new Repository[Int, String] {
-      override def get(key: Int) = {
-        if (key % 3 == 0) {
-          None
-        } else {
-          Option((key * 10).toString)
-        }
-      }
-    }*/
-
-  /*  val source: Repository[String, String] = mock[Repository[String, String]]
-    when(source.get("one")).thenReturn(Option("1"))
-    val cache = new CacheImpl[String, String](3, source)
-
-    //Array(0,1,2,3,3,3,1,1,4,5,0).foreach { i =>
-    Seq(0, 1, 2, 1, 1, 4, 5, 0).foreach { i =>
-      println(s"$i => ${cache.get(i)}")
-      println("=" * 20)
-    }*/
-
   "cache" when {
+    "caching 2 items" should {
+
+      "discard oldest data" in {
+        val source: Repository[String, String] = mock[Repository[String, String]]
+        when(source.get("one")).thenReturn(Option("1"))
+        when(source.get("two")).thenReturn(Option("2"))
+        val cache = new CacheImpl[String, String](2, source)
+        cache.get("one") shouldBe Option("1")
+        cache.get("two") shouldBe Option("2")
+        cache.get("two") shouldBe Option("2")
+        cache.get("one") shouldBe Option("1")
+        verify(source, times(1)).get("one")
+        verify(source).get("two")
+        verifyNoMoreInteractions(source)
+      }
+    }
 
     "caching " should {
 
