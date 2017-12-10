@@ -10,9 +10,18 @@ import scala.com.blogspot.jaredstemen.{CacheImpl, Repository}
 
 class MySpec extends WordSpec with MockitoSugar with Matchers {
 
-  "cache" when {
-    "caching 2 items" should {
+  "A cache" when {
+    "it has a max size of zero" should {
+      "throw an exception" in {
 
+        val source: Repository[String, String] = mock[Repository[String, String]]
+        intercept[IllegalArgumentException] {
+          new CacheImpl[String, String](0, source)
+        }
+      }
+    }
+
+    "caching 2 items" should {
       "discard oldest data" in {
         val source: Repository[String, String] = mock[Repository[String, String]]
         when(source.get("one")).thenReturn(Option("1"))
@@ -28,7 +37,7 @@ class MySpec extends WordSpec with MockitoSugar with Matchers {
       }
     }
 
-    "caching " should {
+    "caching" should {
 
       "cache missing items" in {
         val source: Repository[String, String] = mock[Repository[String, String]]

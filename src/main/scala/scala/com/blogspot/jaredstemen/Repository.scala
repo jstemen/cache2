@@ -89,10 +89,14 @@ class Node[KeyType](private var _backwards: Option[Node[KeyType]], private var _
 }
 
 class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[KeyType, ValueType]) extends Repository[KeyType, ValueType] {
+  if (maxSize < 1){
+    throw new IllegalArgumentException("Catch size must be at least 1")
+  }
 
   val keyNodeKeymap: mutable.Map[KeyType, Node[KeyType]] = mutable.Map[KeyType, Node[KeyType]]()
   val map: mutable.Map[Node[KeyType], Option[ValueType]] = mutable.Map[Node[KeyType], Option[ValueType]]()
   var headOpt: Option[Node[KeyType]] = None
+
 
   override def toString: String = {
     s"""
