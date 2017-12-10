@@ -32,6 +32,19 @@ class MySpec extends WordSpec with MockitoSugar with Matchers {
 
   "cache" when {
 
+    "caching " should {
+
+      "cache missing items" in {
+        val source: Repository[String, String] = mock[Repository[String, String]]
+        when(source.get("one")).thenReturn(None)
+        val cache = new CacheImpl[String, String](3, source)
+        cache.get("one") shouldBe None
+        cache.get("one") shouldBe None
+        verify(source).get("one")
+        verifyNoMoreInteractions(source)
+      }
+
+    }
 
     "empty" should {
       "return None" in {
@@ -57,14 +70,14 @@ class MySpec extends WordSpec with MockitoSugar with Matchers {
     "full" should {
       "discard oldest data" in {
         val source: Repository[String, String] = mock[Repository[String, String]]
-        when(source.get("one")).thenReturn(Option("1")).thenReturn(None)
-        when(source.get("two")).thenReturn(Option("2")).thenReturn(None)
+        when(source.get("one")).thenReturn(Option("1"))
+        when(source.get("two")).thenReturn(Option("2"))
         val cache = new CacheImpl[String, String](1, source)
         cache.get("one") shouldBe Option("1")
         cache.get("two") shouldBe Option("2")
         cache.get("two") shouldBe Option("2")
         cache.get("one") shouldBe Option("1")
-        verify(source,times(2)).get("one")
+        verify(source, times(2)).get("one")
         verify(source).get("two")
         verifyNoMoreInteractions(source)
       }

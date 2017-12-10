@@ -85,7 +85,7 @@ class Node[KeyType](private var _backwards: Option[Node[KeyType]], private var _
 class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[KeyType, ValueType]) extends Repository[KeyType, ValueType] {
 
   val keyNodeKeymap: mutable.Map[KeyType, Node[KeyType]] = mutable.Map[KeyType, Node[KeyType]]()
-  val map: mutable.Map[Node[KeyType], ValueType] = mutable.Map[Node[KeyType], ValueType]()
+  val map: mutable.Map[Node[KeyType], Option[ValueType]] = mutable.Map[Node[KeyType], Option[ValueType]]()
   var headOpt: Option[Node[KeyType]] = None
 
   override def toString: String = {
@@ -129,26 +129,37 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
     headOpt = genNode
   }
 
-  def removeNodeToMakeSpace() = {
+  def lastOpt: Option[Node[KeyType]] = {
+    //TODO should be possible to track the tail by updating it each time we remove nodes.
     headOpt match {
       case Some(head) =>
-        //TODO should be possible to track the tail by updating it each time we remove nodes.
-        var last = head
+        var last: Node[KeyType] = head
         while (last.backwards.isDefined) {
           last = last.backwards.get
         }
-        last.forwards.get.backwards = None
+        Option(last)
+      case None => None
+    }
+  }
+
+  def removeNodeToMakeSpace() = {
+    lastOpt match {
+      case Some(last) =>
+        last.forwards match {
+          case Some(secondToLast) =>
+            secondToLast.backwards = None
+          case None =>
+            //head == last
+            headOpt = None
+        }
         keyNodeKeymap.remove(last.key)
         map.remove(last)
-
       case None =>
         throw new RuntimeException("Called remove node on an empty data set!")
     }
-
-
   }
 
-  def addToCache(nodeKey: Node[KeyType], v: ValueType) {
+  def addToCache(nodeKey: Node[KeyType], v: Option[ValueType]) {
     keyNodeKeymap(nodeKey.key) = nodeKey
     map += nodeKey -> v
     nodeKey.backwards = headOpt
@@ -159,23 +170,19 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
 
     println(s"get value for ${key} ")
     val nodeKeyOpt: Option[Node[KeyType]] = keyNodeKeymap.get(key)
-    val ret = nodeKeyOpt match {
+    val ret: Option[ValueType] = nodeKeyOpt match {
       case Some(nodeKey) =>
         println("*cache HIT")
         reprioritizeNodeKey(nodeKey)
-        val cachedValueOpt = map.get(nodeKey)
+        val cachedValueOpt: Option[ValueType] = map(nodeKey)
         cachedValueOpt
       case None =>
         println("*cache MISS")
         val v = source.get(key)
-        v match {
-          case Some(value) =>
-            if (map.size == maxSize) {
-              removeNodeToMakeSpace()
-            }
-            addToCache(new Node(None, None, key), value)
-          case None => // Don't do anything
+        if (map.size == maxSize) {
+          removeNodeToMakeSpace()
         }
+        addToCache(new Node(None, None, key), v)
         v
     }
     println(s"keyNodeKeymap is ${keyNodeKeymap} ")
