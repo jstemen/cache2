@@ -27,22 +27,25 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
       return
     }
 
-    val newHead = new Node(headOpt, None, nodeKey.key)
+/*    val newHead = new Node(headOpt, None, nodeKey.key)
     val origHead = headOpt
-    val origTail = lastOpt
+    val origTail = lastOpt*/
     //remove nodeKey from queue
     nodeKey.backwards match {
       case Some(back) => {
         nodeKey.forwards match {
           case Some(foward) =>
             println("pinch out node")
-            foward.backwards = Option(back)
-            nodeKey.backwards = None
             nodeKey.forwards = None
-            origHead.get.forwards = Option(newHead)
-            newHead.forwards = origTail
-            headOpt = Option(newHead)
-          //back.forwards = Option(foward)
+            nodeKey.backwards = None
+            foward.backwards = Option(back)
+
+            //Reinsert node at head
+            nodeKey.backwards = headOpt
+            nodeKey.forwards = lastOpt
+            headOpt = Option(nodeKey)
+
+            println("done")
           case None =>
             println("We are on the head node")
             throw new IllegalStateException(s"Forward node is undefined for $nodeKey")
@@ -105,6 +108,8 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
     val ret: Option[ValueType] = nodeKeyOpt match {
       case Some(nodeKey) =>
         println("*cache HIT")
+
+        println(s"head is ${headOpt.get.fullToString()} ")
         reprioritizeNodeKey(nodeKey)
         val cachedValueOpt: Option[ValueType] = map(nodeKey)
         cachedValueOpt

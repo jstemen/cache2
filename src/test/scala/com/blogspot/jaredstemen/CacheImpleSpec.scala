@@ -37,6 +37,23 @@ class CacheImpleSpec extends WordSpec with MockitoSugar with Matchers {
     }
 
     "caching" should {
+      "not crash" in {
+
+        val source = new Repository[Int, String] {
+          override def get(key: Int) = {
+            if (key % 3 == 0) {
+              None
+            } else {
+              Option((key * 10).toString)
+            }
+          }
+        }
+        val cache = new CacheImpl[Int, String](3, source)
+        Seq(0, 1, 2, 1, 1, 4, 5, 0).foreach { i =>
+          println(s"$i => ${cache.get(i)}")
+          println("=" * 20)
+        }
+      }
 
       "cache missing items" in {
         val source: Repository[String, String] = mock[Repository[String, String]]
