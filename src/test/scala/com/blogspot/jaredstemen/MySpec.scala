@@ -1,7 +1,6 @@
 package com.blogspot.jaredstemen
 
 import org.mockito.Mockito._
-import org.mockito.Matchers._
 
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
@@ -45,7 +44,7 @@ class MySpec extends WordSpec with MockitoSugar with Matchers {
         val cache = new CacheImpl[String, String](3, source)
         cache.get("one") shouldBe None
         cache.get("one") shouldBe None
-        verify(source).get("one")
+        verify(source, times(1)).get("one")
         verifyNoMoreInteractions(source)
       }
 
@@ -83,7 +82,7 @@ class MySpec extends WordSpec with MockitoSugar with Matchers {
         cache.get("two") shouldBe Option("2")
         cache.get("one") shouldBe Option("1")
         verify(source, times(2)).get("one")
-        verify(source).get("two")
+        verify(source, times(1)).get("two")
         verifyNoMoreInteractions(source)
       }
     }
