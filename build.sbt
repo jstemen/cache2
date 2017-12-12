@@ -1,4 +1,4 @@
-name := "cace2"
+name := "cache2"
 
 version := "0.1"
 
