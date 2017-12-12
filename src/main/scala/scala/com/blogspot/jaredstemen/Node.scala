@@ -69,7 +69,6 @@ class Node[KeyType](private var _backwards: Option[Node[KeyType]], private var _
 
       if (loc.backwards.get.forwards.get != loc) {
         throw new RuntimeException(s"loc: ${loc} loc.backwards is ${loc.backwards} and backward foward is ${loc.backwards.get.forwards}")
-        //println(s"loc: ${loc.key} loc.backwards is ${loc.backwards.get.key} and backward foward is ${loc.backwards.get.forwards.get.key}")
       }
       loc = loc.backwards.get
       looped = loc == this

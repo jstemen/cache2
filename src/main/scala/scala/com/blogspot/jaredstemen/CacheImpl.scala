@@ -27,10 +27,6 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
       return
     }
 
-/*    val newHead = new Node(headOpt, None, nodeKey.key)
-    val origHead = headOpt
-    val origTail = lastOpt*/
-    //remove nodeKey from queue
     nodeKey.backwards match {
       case Some(back) => {
         nodeKey.forwards match {
