@@ -1,9 +1,8 @@
 package scala.com.blogspot.jaredstemen
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 
-class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[KeyType, ValueType]) extends Repository[KeyType, ValueType] {
+class LruCache[KeyType, ValueType](val maxSize: Int, val source: Repository[KeyType, ValueType]) extends Repository[KeyType, ValueType] {
   if (maxSize < 1) {
     throw new IllegalArgumentException("Catch size must be at least 1")
   }
@@ -52,7 +51,7 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
 
   private def unlinkNode(nodeKey: Node[KeyType]) = {
     nodeKey.backwards match {
-      case Some(back) => {
+      case Some(back) =>
         nodeKey.forwards match {
           case Some(foward) =>
             println("pinch out node")
@@ -66,10 +65,8 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
             println("We are on the head node")
             throw new IllegalStateException(s"Forward node is undefined for $nodeKey")
         }
-      }
-      case None => {
+      case None =>
         throw new IllegalStateException(s"Backward node is undefined for $nodeKey")
-      }
     }
   }
 
@@ -126,8 +123,8 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
         addToCache(new Node(None, None, key), v)
         v
     }
-    println(s"keyNodeKeymap is ${keyNodeKeymap} ")
-    println(s"map is ${map} ")
+    println(s"keyNodeKeymap is $keyNodeKeymap ")
+    println(s"map is $map ")
     headOpt match {
       case Some(head) =>
         println(s"head is \n${head.fullToString()} ")

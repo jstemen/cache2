@@ -11,7 +11,7 @@ object Runner extends App {
       }
     }
   }
-  val cache = new CacheImpl[Int, String](3, source)
+  val cache = new LruCache[Int, String](3, source)
 
   //Array(0,1,2,3,3,3,1,1,4,5,0).foreach { i =>
   Seq(0, 1, 2, 1, 1, 4, 5, 0).foreach { i =>

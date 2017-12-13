@@ -4,7 +4,7 @@ import org.mockito.Mockito._
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
 
-import scala.com.blogspot.jaredstemen.{CacheImpl, Node, Repository}
+import scala.com.blogspot.jaredstemen.{LruCache, Node, Repository}
 
 class NodeSpec extends WordSpec with MockitoSugar with Matchers {
 

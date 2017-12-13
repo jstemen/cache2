@@ -5,9 +5,9 @@ import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
 
 import scala.collection.mutable
-import scala.com.blogspot.jaredstemen.{CacheImpl, Repository}
+import scala.com.blogspot.jaredstemen.{LruCache, Repository}
 
-class CacheImpleSpec extends WordSpec with MockitoSugar with Matchers {
+class LruCacheImpleSpec extends WordSpec with MockitoSugar with Matchers {
 
   "A cache" when {
     "it has a max size of zero" should {
@@ -15,7 +15,7 @@ class CacheImpleSpec extends WordSpec with MockitoSugar with Matchers {
 
         val source: Repository[String, String] = mock[Repository[String, String]]
         intercept[IllegalArgumentException] {
-          new CacheImpl[String, String](0, source)
+          new LruCache[String, String](0, source)
         }
       }
     }
@@ -25,7 +25,7 @@ class CacheImpleSpec extends WordSpec with MockitoSugar with Matchers {
         val source: Repository[String, String] = mock[Repository[String, String]]
         when(source.get("one")).thenReturn(Option("1"))
         when(source.get("two")).thenReturn(Option("2"))
-        val cache = new CacheImpl[String, String](2, source)
+        val cache = new LruCache[String, String](2, source)
         cache.get("one") shouldBe Option("1")
         cache.get("two") shouldBe Option("2")
         cache.get("two") shouldBe Option("2")
@@ -49,7 +49,7 @@ class CacheImpleSpec extends WordSpec with MockitoSugar with Matchers {
             }
           }
         }
-        val cache = new CacheImpl[Int, String](3, source)
+        val cache = new LruCache[Int, String](3, source)
         //  0
         //  0, 1
         //  0, 1, 2
@@ -81,7 +81,7 @@ class CacheImpleSpec extends WordSpec with MockitoSugar with Matchers {
       "cache missing items" in {
         val source: Repository[String, String] = mock[Repository[String, String]]
         when(source.get("one")).thenReturn(None)
-        val cache = new CacheImpl[String, String](3, source)
+        val cache = new LruCache[String, String](3, source)
         cache.get("one") shouldBe None
         cache.get("one") shouldBe None
         verify(source, times(1)).get("one")
@@ -94,7 +94,7 @@ class CacheImpleSpec extends WordSpec with MockitoSugar with Matchers {
       "return None" in {
         val source: Repository[String, String] = mock[Repository[String, String]]
         when(source.get("one")).thenReturn(None)
-        val cache = new CacheImpl[String, String](3, source)
+        val cache = new LruCache[String, String](3, source)
         cache.get("one") shouldBe None
         verify(source).get("one")
         verifyNoMoreInteractions(source)
@@ -104,7 +104,7 @@ class CacheImpleSpec extends WordSpec with MockitoSugar with Matchers {
       "cache data" in {
         val source: Repository[String, String] = mock[Repository[String, String]]
         when(source.get("one")).thenReturn(Option("1")).thenReturn(None)
-        val cache = new CacheImpl[String, String](3, source)
+        val cache = new LruCache[String, String](3, source)
         cache.get("one") shouldBe Option("1")
         verify(source).get("one")
         verifyNoMoreInteractions(source)
@@ -116,7 +116,7 @@ class CacheImpleSpec extends WordSpec with MockitoSugar with Matchers {
         val source: Repository[String, String] = mock[Repository[String, String]]
         when(source.get("one")).thenReturn(Option("1"))
         when(source.get("two")).thenReturn(Option("2"))
-        val cache = new CacheImpl[String, String](1, source)
+        val cache = new LruCache[String, String](1, source)
         cache.get("one") shouldBe Option("1")
         cache.get("two") shouldBe Option("2")
         cache.get("two") shouldBe Option("2")
