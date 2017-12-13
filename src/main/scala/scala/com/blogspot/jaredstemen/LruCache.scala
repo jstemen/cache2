@@ -4,7 +4,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 import scala.collection.mutable
 
-class LruCache[KeyType, ValueType](val maxSize: Int, val source: Repository[KeyType, ValueType]) extends Repository[KeyType, ValueType] with LazyLogging{
+class LruCache[KeyType, ValueType](val maxSize: Int, val source: Repository[KeyType, ValueType]) extends Repository[KeyType, ValueType] with LazyLogging {
   if (maxSize < 1) {
     throw new IllegalArgumentException("Catch size must be at least 1")
   }
@@ -17,13 +17,11 @@ class LruCache[KeyType, ValueType](val maxSize: Int, val source: Repository[KeyT
   def cachedContents: Map[KeyType, Option[ValueType]] = {
     var positionOpt = headOpt
     val accumulator = mutable.Map[KeyType, Option[ValueType]]()
-    var first = true
-    while (positionOpt != headOpt || first) {
-      first = false
+    do {
       val position: Node[KeyType] = positionOpt.get
       accumulator += position.key -> map(position)
       positionOpt = position.backwards
-    }
+    } while (positionOpt != headOpt)
 
     accumulator.toMap
   }
