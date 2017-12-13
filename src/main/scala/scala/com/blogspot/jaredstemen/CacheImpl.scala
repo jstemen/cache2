@@ -1,16 +1,31 @@
 package scala.com.blogspot.jaredstemen
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[KeyType, ValueType]) extends Repository[KeyType, ValueType] {
   if (maxSize < 1) {
     throw new IllegalArgumentException("Catch size must be at least 1")
   }
 
-  val keyNodeKeymap: mutable.Map[KeyType, Node[KeyType]] = mutable.Map[KeyType, Node[KeyType]]()
-  val map: mutable.Map[Node[KeyType], Option[ValueType]] = mutable.Map[Node[KeyType], Option[ValueType]]()
-  var headOpt: Option[Node[KeyType]] = None
+  private val keyNodeKeymap: mutable.Map[KeyType, Node[KeyType]] = mutable.Map[KeyType, Node[KeyType]]()
+  private val map: mutable.Map[Node[KeyType], Option[ValueType]] = mutable.Map[Node[KeyType], Option[ValueType]]()
+  private var headOpt: Option[Node[KeyType]] = None
 
+
+  def cachedContents: Map[KeyType, Option[ValueType]] = {
+    var positionOpt = headOpt
+    val accumulator = mutable.Map[KeyType, Option[ValueType]]()
+    var first = true
+    while (positionOpt != headOpt || first) {
+      first = false
+      val position: Node[KeyType] = positionOpt.get
+      accumulator += position.key -> map(position)
+      positionOpt = position.backwards
+    }
+
+    accumulator.toMap
+  }
 
   override def toString: String = {
     s"""
@@ -105,7 +120,7 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
       case Some(nodeKey) =>
         println("*cache HIT")
 
-        println(s"head is ${headOpt.get.fullToString()} ")
+        println(s"head is\n ${headOpt.get.fullToString()} ")
         reprioritizeNodeKey(nodeKey)
         val cachedValueOpt: Option[ValueType] = map(nodeKey)
         cachedValueOpt
@@ -122,7 +137,7 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
     println(s"map is ${map} ")
     headOpt match {
       case Some(head) =>
-        println(s"head is ${head.fullToString()} ")
+        println(s"head is \n${head.fullToString()} ")
       case None =>
         println(s"head is $headOpt ")
     }

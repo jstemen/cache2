@@ -1,10 +1,10 @@
 package com.blogspot.jaredstemen
 
 import org.mockito.Mockito._
-
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
 
+import scala.collection.mutable
 import scala.com.blogspot.jaredstemen.{CacheImpl, Repository}
 
 class CacheImpleSpec extends WordSpec with MockitoSugar with Matchers {
@@ -39,6 +39,7 @@ class CacheImpleSpec extends WordSpec with MockitoSugar with Matchers {
     "caching" should {
       "not crash" in {
 
+        println("start carsshshsh***********")
         val source = new Repository[Int, String] {
           override def get(key: Int) = {
             if (key % 3 == 0) {
@@ -49,9 +50,31 @@ class CacheImpleSpec extends WordSpec with MockitoSugar with Matchers {
           }
         }
         val cache = new CacheImpl[Int, String](3, source)
-        Seq(0, 1, 2, 1, 1, 4, 5, 0).foreach { i =>
-          println(s"$i => ${cache.get(i)}")
-          println("=" * 20)
+        //  0
+        //  0, 1
+        //  0, 1, 2
+        //     0, 2, 1
+        //        0, 2, 1
+        //           2, 1, 4
+        //              1, 4, 5
+        //                 4, 5, 0
+        //                    4, 0, 5
+        val ints = Array(0, 1, 2, 1, 1, 4, 5, 0, 5, 3, 2, 1, 3, 4, 4, 4, 4, 4, 2, 4, 2, 1, 1, 0, 0, 2, 2, 4, 4, 2)
+        ints.zipWithIndex.foreach { case (k, i) =>
+          println(s"i is ${i}")
+
+          val uniLookBack = mutable.HashSet[Int]()
+          var j = i
+          while (j > -1 && uniLookBack.size < 3) {
+            val foundKey = ints(j)
+            uniLookBack += foundKey
+            j -= 1
+          }
+          cache.get(k)
+
+
+          println(s"uniLookback is ${uniLookBack}")
+          cache.cachedContents.keys shouldBe uniLookBack
         }
       }
 
