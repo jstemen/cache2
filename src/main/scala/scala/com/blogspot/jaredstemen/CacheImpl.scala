@@ -42,6 +42,15 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
       return
     }
 
+    unlinkNode(nodeKey)
+
+    //Reinsert node at head
+    nodeKey.forwards = lastOpt
+    nodeKey.backwards = headOpt
+    headOpt = Option(nodeKey)
+  }
+
+  private def unlinkNode(nodeKey: Node[KeyType]) = {
     nodeKey.backwards match {
       case Some(back) => {
         nodeKey.forwards match {
@@ -51,10 +60,6 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
             nodeKey.backwards = None
             foward.backwards = Option(back)
 
-            //Reinsert node at head
-            nodeKey.backwards = headOpt
-            nodeKey.forwards = lastOpt
-            headOpt = Option(nodeKey)
 
             println("done")
           case None =>
@@ -66,31 +71,19 @@ class CacheImpl[KeyType, ValueType](val maxSize: Int, val source: Repository[Key
         throw new IllegalStateException(s"Backward node is undefined for $nodeKey")
       }
     }
-
   }
 
   private def lastOpt: Option[Node[KeyType]] = {
     headOpt match {
       case Some(head) =>
-        head.backwards
+        head.forwards
       case None => None
     }
   }
 
   private def removeNode(node: Node[KeyType]): Unit = {
     println(s"Removing node ${node}")
-    if (map.size == 1) {
-      headOpt = None
-    } else {
-      headOpt match {
-        case Some(origHead) =>
-          if (origHead == node) {
-            headOpt = origHead.backwards
-          }
-        case None =>
-      }
-      node.forwards.get.backwards = node.backwards
-    }
+    unlinkNode(node)
 
     //Delete reference from other structures
     keyNodeKeymap.remove(node.key)
