@@ -1,8 +1,10 @@
 package scala.com.blogspot.jaredstemen
 
+import com.typesafe.scalalogging.LazyLogging
+
 import scala.collection.mutable
 
-class LruCache[KeyType, ValueType](val maxSize: Int, val source: Repository[KeyType, ValueType]) extends Repository[KeyType, ValueType] {
+class LruCache[KeyType, ValueType](val maxSize: Int, val source: Repository[KeyType, ValueType]) extends Repository[KeyType, ValueType] with LazyLogging{
   if (maxSize < 1) {
     throw new IllegalArgumentException("Catch size must be at least 1")
   }
@@ -29,7 +31,7 @@ class LruCache[KeyType, ValueType](val maxSize: Int, val source: Repository[KeyT
   override def toString: String = {
     s"""
       keyNodeKeymap: ${keyNodeKeymap.toString}
-      map: ${map}
+      map: $map
       headOpt: ${}
     """.stripMargin
 
@@ -53,16 +55,16 @@ class LruCache[KeyType, ValueType](val maxSize: Int, val source: Repository[KeyT
     nodeKey.backwards match {
       case Some(back) =>
         nodeKey.forwards match {
-          case Some(foward) =>
-            println("pinch out node")
+          case Some(forward) =>
+            logger.debug("pinch out node")
             nodeKey.forwards = None
             nodeKey.backwards = None
-            foward.backwards = Option(back)
+            forward.backwards = Option(back)
 
 
-            println("done")
+            logger.debug("done")
           case None =>
-            println("We are on the head node")
+            logger.debug("We are on the head node")
             throw new IllegalStateException(s"Forward node is undefined for $nodeKey")
         }
       case None =>
@@ -79,7 +81,7 @@ class LruCache[KeyType, ValueType](val maxSize: Int, val source: Repository[KeyT
   }
 
   private def removeNode(node: Node[KeyType]): Unit = {
-    println(s"Removing node ${node}")
+    logger.debug(s"Removing node $node")
     unlinkNode(node)
 
     //Delete reference from other structures
@@ -104,18 +106,18 @@ class LruCache[KeyType, ValueType](val maxSize: Int, val source: Repository[KeyT
 
   override def get(key: KeyType): Option[ValueType] = {
 
-    println(s"******** get value for ${key} *************")
+    logger.debug(s"******** get value for $key *************")
     val nodeKeyOpt: Option[Node[KeyType]] = keyNodeKeymap.get(key)
     val ret: Option[ValueType] = nodeKeyOpt match {
       case Some(nodeKey) =>
-        println("*cache HIT")
+        logger.debug("*cache HIT")
 
-        println(s"head is\n ${headOpt.get.fullToString()} ")
+        logger.debug(s"head is\n ${headOpt.get.fullToString()} ")
         reprioritizeNodeKey(nodeKey)
         val cachedValueOpt: Option[ValueType] = map(nodeKey)
         cachedValueOpt
       case None =>
-        println("*cache MISS")
+        logger.debug("*cache MISS")
         val v = source.get(key)
         if (map.size == maxSize) {
           removeNode(lastOpt.get)
@@ -123,13 +125,13 @@ class LruCache[KeyType, ValueType](val maxSize: Int, val source: Repository[KeyT
         addToCache(new Node(None, None, key), v)
         v
     }
-    println(s"keyNodeKeymap is $keyNodeKeymap ")
-    println(s"map is $map ")
+    logger.debug(s"keyNodeKeymap is $keyNodeKeymap ")
+    logger.debug(s"map is $map ")
     headOpt match {
       case Some(head) =>
-        println(s"head is \n${head.fullToString()} ")
+        logger.debug(s"head is \n${head.fullToString()} ")
       case None =>
-        println(s"head is $headOpt ")
+        logger.debug(s"head is $headOpt ")
     }
     ret
   }

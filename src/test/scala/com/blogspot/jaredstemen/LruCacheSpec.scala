@@ -7,7 +7,7 @@ import org.scalatest.mockito.MockitoSugar
 import scala.collection.mutable
 import scala.com.blogspot.jaredstemen.{LruCache, Repository}
 
-class LruCacheImpleSpec extends WordSpec with MockitoSugar with Matchers {
+class LruCacheSpec extends WordSpec with MockitoSugar with Matchers {
 
   "A cache" when {
     "it has a max size of zero" should {
