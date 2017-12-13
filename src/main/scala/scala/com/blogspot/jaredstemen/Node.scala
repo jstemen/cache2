@@ -73,7 +73,6 @@ class Node[KeyType](private var _backwards: Option[Node[KeyType]], private var _
       loc = loc.backwards.get
       looped = loc == this
     }
-    //sb.append(s"<key: ${loc.key}>  -> ")
     sb.append("tail")
 
     sb.toString

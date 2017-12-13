@@ -13,8 +13,7 @@ object Runner extends App {
   }
   val cache = new LruCache[Int, String](3, source)
 
-  //Array(0,1,2,3,3,3,1,1,4,5,0).foreach { i =>
-  Seq(0, 1, 2, 1, 1, 4, 5, 0).foreach { i =>
+  Seq(0, 1, 2, 3, 1, 2, 3, 9, 5, 0).foreach { i =>
     println(s"$i => ${cache.get(i)}")
     println("=" * 20)
   }
